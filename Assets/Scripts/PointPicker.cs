@@ -4,12 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class PointPicker : MonoBehaviour {
+    
     public Camera MainCamera;
-    public Button HeadButton, ChestButton, StomachButton, ShoulderRButton,
-        ShoulderLButton, ArmRButton, ArmLButton, HipButton, ThighLButton,
-        ThighRButton, CalfLButton, CalfRButton;
 
-
+    public Button HeadButton,      ChestButton,  StomachButton, ShoulderRButton,
+                  ShoulderLButton, ArmRButton,   ArmLButton,    HipButton, 
+                  ThighLButton,    ThighRButton, CalfLButton,   CalfRButton;
 
     void Start() {
         HeadButton     .onClick.AddListener(() => ClickHandler(HeadButton.GetComponent<HeadButtonS>().Head)); 
@@ -28,8 +28,5 @@ public class PointPicker : MonoBehaviour {
 
     void ClickHandler(GameObject obj) {
         MainCamera.GetComponent<CameraController>().SetCameraPivot(obj.GetComponent<Transform>());
-        Debug.Log($"Child button clicked!");
     }
-
-    void Update() { }
 }
