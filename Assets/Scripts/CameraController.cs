@@ -12,6 +12,11 @@ public class CameraController : MonoBehaviour {
 
     bool shiftPressed = false;
 
+    public void SetCameraPivot(Transform cameraPivot) {
+        this.cameraPivot = cameraPivot;
+        transform.LookAt(cameraPivot);
+    }
+
     // Start is called before the first frame update
     void Start() {}
 
