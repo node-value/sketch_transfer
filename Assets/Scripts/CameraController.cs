@@ -12,6 +12,8 @@ public class CameraController : MonoBehaviour {
 
     bool shiftPressed = false;
 
+    private Vector3 lastMousePosition;
+
     public void SetCameraPivot(Transform cameraPivot) {
         this.cameraPivot = cameraPivot;
         transform.LookAt(cameraPivot);
@@ -20,7 +22,7 @@ public class CameraController : MonoBehaviour {
     // Start is called before the first frame update
     void Start() {}
 
-    // Update is called once per frame
+
     void Update() {
         if (Input.GetKeyDown(KeyCode.LeftShift)) shiftPressed = true;
         if (Input.GetKeyUp(KeyCode.LeftShift))   shiftPressed = false;
@@ -31,6 +33,14 @@ public class CameraController : MonoBehaviour {
             r = Mathf.Clamp(r + (-Input.GetAxis("Mouse ScrollWheel")) * sens, rMin, rMax);
             _angleX += -Input.GetAxis("Horizontal") * speed;
             _angleY += Input.GetAxis("Vertical") * speed;
+        }
+
+        if (Input.GetMouseButtonDown(0)) lastMousePosition = Input.mousePosition;
+        else if (Input.GetMouseButton(0)) {
+            Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+            _angleX += mouseDelta.x * sens*4 * Time.deltaTime;
+            _angleY += -mouseDelta.y * sens*4 * Time.deltaTime;
+            lastMousePosition = Input.mousePosition;
         }
 
         float x = cameraPivot.position.x + r * Mathf.Sin(_angleX * Mathf.Deg2Rad) * Mathf.Cos(_angleY * Mathf.Deg2Rad);
