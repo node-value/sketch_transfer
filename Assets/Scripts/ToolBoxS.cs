@@ -11,25 +11,26 @@ public class ToolBoxS : MonoBehaviour {
     public GameObject projectorPrefab;
     public GameObject scetchEditor;
 
-    private Texture2D      texture;
     private DecalProjector currProjector;
 
     private ToolBoxState state = ToolBoxState.NONE;
     void Start() {
-        addButton.onClick.AddListener(AddTattooOnClick);
-        pickButton.onClick.AddListener(PickTattooOnClick);
-        viewButton.onClick.AddListener(ViewTattoOnClick);
+        addButton.   onClick.AddListener(AddTattooOnClick);
+        pickButton.  onClick.AddListener(() => state = ToolBoxState.PICK);
+        viewButton.  onClick.AddListener(() => state = ToolBoxState.VIEW);
+        removeButton.onClick.AddListener(() => state = ToolBoxState.REMOVE);
     }
 
     void Update() {
         RelocateTatto();
         PickTattoo();
         EditTattoo();
+        DeleteTattoo();
     }
 
     void RelocateTatto() {
         if (( state == ToolBoxState.ADD || state == ToolBoxState.VIEW )  && currProjector != null) {
-            RelocateCast();
+            RelocateCast(state);
             if (Input.GetMouseButtonDown(0)) state = ToolBoxState.PICK;  
         }
     }
@@ -42,6 +43,15 @@ public class ToolBoxS : MonoBehaviour {
         }
     }
 
+    void DeleteTattoo() {
+        if (state == ToolBoxState.REMOVE && currProjector != null) {
+            scetchEditor.GetComponent<ScetchEditorS>().Projector = null;
+            Destroy(currProjector.gameObject);
+            currProjector = null;
+            state = ToolBoxState.NONE;
+        } 
+    }
+
     void PickTattoo() {
         if (( state == ToolBoxState.PICK || 
               state == ToolBoxState.VIEW || 
@@ -50,11 +60,14 @@ public class ToolBoxS : MonoBehaviour {
         }
     }
 
-    void RelocateCast() {
+    void RelocateCast(ToolBoxState state) {
         int layerMask = 1 << LayerMask.NameToLayer("Model");
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask))
-            currProjector.transform.SetPositionAndRotation(hit.point + hit.normal * 0.01f, Quaternion.LookRotation(hit.normal, Vector3.up));
+            if (state == ToolBoxState.ADD) 
+                currProjector.transform.SetPositionAndRotation(
+                    hit.point + hit.normal * 0.01f, Quaternion.LookRotation(hit.normal, Vector3.up));
+            else currProjector.transform.position = hit.point + hit.normal * 0.01f;
     }
 
     void PickCast() {
@@ -64,22 +77,15 @@ public class ToolBoxS : MonoBehaviour {
 
 
     void AddTattooOnClick() {
-        state = ToolBoxState.ADD;
         string path = EditorUtility.OpenFilePanel("Open Image", "", "png,jpg,jpeg");
-        if (path != null) {
-            texture = CreateTexture2D(path);
-            CreateProjector(texture);
-        }
+        if (path != null) CreateProjector(CreateTexture2D(path));
+        state = ToolBoxState.ADD;
     }
-    void PickTattooOnClick() => state = ToolBoxState.PICK;
-    void ViewTattoOnClick()  => state = ToolBoxState.VIEW;
 
     void CreateProjector(Texture2D texture) { 
-        currProjector = Instantiate(projectorPrefab, new Vector3(0, 0, 0), new Quaternion(), referenceObject).GetComponent<DecalProjector>();
+        currProjector = Instantiate(projectorPrefab, new(0, 0, 0), new(), referenceObject).GetComponent<DecalProjector>();
         currProjector.material = Material.Instantiate(currProjector.material);
-        currProjector.material.SetTexture("Base_Map", texture);
-        currProjector.GetComponent<ProjectorS>().State = ScetchState.EDIT;
-        
+        currProjector.material.SetTexture("Base_Map", texture); 
     }
 
     Texture2D CreateTexture2D(string path) {

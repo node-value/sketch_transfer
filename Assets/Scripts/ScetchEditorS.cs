@@ -13,7 +13,7 @@ public class ScetchEditorS : MonoBehaviour {
 
     // Start is called before the first frame update
     void Start() {
-        switchEditPanel(false);
+        SwitchEditPanel(false);
         scaleSlider.onValueChanged.AddListener(OnScaleChanged);
         rotateSlider.onValueChanged.AddListener(OnRotateChanged);
         depthSlider.onValueChanged.AddListener(OnDepthChanged);
@@ -22,28 +22,33 @@ public class ScetchEditorS : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        if (Projector != null) {
-            
-        } 
     }
 
     void OnProjectorChanged(DecalProjector value) {
         if (value == null) {
             scetch.GetComponent<Image>().sprite = null;
         } else {
+            scaleSlider.value = Projector.size.x;
+            rotateSlider.value = Projector.transform.rotation.eulerAngles.z;
+            depthSlider.value = Projector.size.z;
             Texture t = Projector.material.GetTexture("Base_Map");
             scetch.GetComponent<Image>().sprite = Sprite.Create((Texture2D)t, new(0, 0, t.width, t.height), Vector2.one * 0.5f);   
-        } switchEditPanel(value != null);
+        } SwitchEditPanel(value != null);
     }
 
-    void OnScaleChanged(float value) {
-        Projector.transform.localScale *= value;
+    void OnScaleChanged(float scale) {
+        Projector.size = new(scale, scale, depthSlider.value);
+        Projector.transform.localScale = new(scale,scale, depthSlider.value);
     }
-    void OnRotateChanged(float value) { }
-    void OnDepthChanged(float value) { }
+    void OnRotateChanged(float value) {
+        Projector.transform.rotation = Quaternion.LookRotation(Projector.transform.forward) * Quaternion.Euler(0,0,value);
+    }
+    void OnDepthChanged(float depth) {
+        Projector.size = new(scaleSlider.value, scaleSlider.value, depth);
+        Projector.transform.localScale = new(scaleSlider.value, scaleSlider.value, depth);
+    }
 
-
-    void switchEditPanel(bool on) {
+    void SwitchEditPanel(bool on) {
         editPanel.SetActive(on); emptyPanel.SetActive(!on); 
     }
 
