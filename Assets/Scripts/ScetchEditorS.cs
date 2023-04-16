@@ -25,10 +25,18 @@ public class ScetchEditorS : MonoBehaviour {
             scaleSlider.value = Projector.size.x;
             rotateSlider.value = Projector.transform.rotation.eulerAngles.z;
             depthSlider.value = Projector.size.z;
-            Texture t = Projector.material.GetTexture("Base_Map");
-            scetch.GetComponent<Image>().sprite = Sprite.Create((Texture2D)t, new(0, 0, t.width, t.height), Vector2.one * 0.5f); 
+            
+            Texture2D t = ResizeTexture((Texture2D)Projector.material.GetTexture("Base_Map"));
+        
+            scetch.GetComponent<Image>().sprite = Sprite.Create(t, new(0, 0, t.width, t.height), Vector2.one * 0.5f); 
         }
         SwitchEditPanel(value != null);
+    }
+
+    Texture2D ResizeTexture(Texture2D texture) {
+        Texture2D result = new(texture.width / 4, texture.height / 4);
+        Graphics.ConvertTexture(texture,result);
+        return result;
     }
 
     void OnScaleChanged(float scale) {
