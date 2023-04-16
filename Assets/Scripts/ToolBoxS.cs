@@ -38,6 +38,8 @@ public class ToolBoxS : MonoBehaviour {
     void EditTattoo() {
         if (state == ToolBoxState.PICK && currProjector != null) {
             scetchEditor.GetComponent<ScetchEditorS>().Projector = currProjector;
+            if (!scetchEditor.GetComponentInParent<MyDropdown>().dropPanel.activeSelf)
+                 scetchEditor.GetComponentInParent<MyDropdown>().HandleClick();
             currProjector = null;
             state = ToolBoxState.NONE;
         }
@@ -64,10 +66,12 @@ public class ToolBoxS : MonoBehaviour {
         int layerMask = 1 << LayerMask.NameToLayer("Model");
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask))
-            if (state == ToolBoxState.ADD) 
-                currProjector.transform.SetPositionAndRotation(
-                    hit.point + hit.normal * 0.01f, Quaternion.LookRotation(hit.normal, Vector3.up));
-            else currProjector.transform.position = hit.point + hit.normal * 0.01f;
+            currProjector.transform.SetPositionAndRotation(
+                hit.point + hit.normal * 0.01f, 
+                Quaternion.LookRotation(
+                    hit.normal, 
+                    state == ToolBoxState.ADD ? 
+                        Vector3.up : currProjector.transform.up));
     }
 
     void PickCast() {
@@ -75,15 +79,14 @@ public class ToolBoxS : MonoBehaviour {
             currProjector = hit.collider.GetComponent<DecalProjector>();
     }
 
-
     void AddTattooOnClick() {
         string path = EditorUtility.OpenFilePanel("Open Image", "", "png,jpg,jpeg");
-        if (path != null) CreateProjector(CreateTexture2D(path));
+        if (path != null) CreateProjector(CreateTexture2D(path)); 
         state = ToolBoxState.ADD;
     }
 
     void CreateProjector(Texture2D texture) { 
-        currProjector = Instantiate(projectorPrefab, new(0, 0, 0), new(), referenceObject).GetComponent<DecalProjector>();
+        currProjector = Instantiate(projectorPrefab, new(0,0,0), new(), referenceObject).GetComponent<DecalProjector>();
         currProjector.material = Material.Instantiate(currProjector.material);
         currProjector.material.SetTexture("Base_Map", texture); 
     }
