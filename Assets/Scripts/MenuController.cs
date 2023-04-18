@@ -46,6 +46,8 @@ public class MenuController : MonoBehaviour {
         mainPanel      .SetActive(true);
     }
     void ConfirmOpenOnClick() {
+        GlobalParams.Map.Add("mode", "load");
+        GlobalParams.Map.Add("projectName", "Test1");
         SceneManager.LoadScene("MainScene");
     }
     void CancelOpenOnClick() {

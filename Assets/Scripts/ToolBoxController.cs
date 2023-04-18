@@ -25,6 +25,7 @@ public class ToolBoxController : MonoBehaviour {
         pickButton.  onClick.AddListener(() => state = ToolBoxState.PICK);
         viewButton.  onClick.AddListener(() => state = ToolBoxState.VIEW);
         removeButton.onClick.AddListener(() => state = ToolBoxState.REMOVE);
+        saveButton  .onClick.AddListener(() => DataController.Save(referenceObject));
     }
 
     void Update() {

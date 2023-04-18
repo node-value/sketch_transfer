@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 [Serializable]
 public class ProjectData {
-    private string           Name           { get; }
-    private BodyType         BodyType       { get; }
-    private List<SketchData> SketchDataList { get; }
+    public string           Name;         
+    public BodyType         BodyType;
+    public List<SketchData> SketchDataList;
 
     public ProjectData(string name, BodyType bodyType) { 
         this.Name = name; this.BodyType = bodyType;
