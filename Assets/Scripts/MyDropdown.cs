@@ -16,6 +16,4 @@ public class MyDropdown : MonoBehaviour {
         arrowButton.image.rectTransform.Rotate(0 ,0, 180);
         dropPanel.SetActive(!dropPanel.activeSelf);
     }
-
-    void Update() { }
 }

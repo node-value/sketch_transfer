@@ -4,17 +4,20 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
-public class ToolBoxS : MonoBehaviour {
+public class ToolBoxController : MonoBehaviour {
 
-    public Button     addButton, removeButton, pickButton, viewButton, zoomInButton, zoomOutButton, saveButton;
+    public Button     
+        addButton,  removeButton, pickButton, 
+        viewButton, zoomInButton, zoomOutButton, 
+        saveButton;
+    
+    public GameObject projectorPrefab, scetchEditor, pointer;
     public Transform  referenceObject;
-    public GameObject projectorPrefab;
-    public GameObject scetchEditor;
-    public GameObject pointer;
-
+    
     private DecalProjector currProjector;
-    private float moveTime = 0.0f;
-    private ToolBoxState state = ToolBoxState.NONE;
+
+    private float        moveTime = 0.0f;
+    private ToolBoxState state    = ToolBoxState.NONE;
     void Start() {
         pointer.SetActive(false);
 
@@ -25,10 +28,10 @@ public class ToolBoxS : MonoBehaviour {
     }
 
     void Update() {
-        RelocateTatto();
-        PickTattoo();
-        EditTattoo();
-        DeleteTattoo();
+        RelocateTatto ();
+        PickTattoo    ();
+        EditTattoo    ();
+        DeleteTattoo  ();
         DisplayPointer();
         //Reset();
     }
@@ -50,7 +53,10 @@ public class ToolBoxS : MonoBehaviour {
         if (( state == ToolBoxState.ADD || state == ToolBoxState.VIEW )  && currProjector != null) {
             Cursor.visible = false;
             RelocateCast(state);
-            if (Input.GetMouseButtonDown(0)) { Cursor.visible = true; state = ToolBoxState.PICK;}  
+            if (Input.GetMouseButtonDown(0)) { 
+                Cursor.visible = true; 
+                state = ToolBoxState.PICK;
+            }  
         }
     }
 
