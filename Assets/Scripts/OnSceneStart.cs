@@ -9,7 +9,7 @@ public class OnSceneStart : MonoBehaviour {
 
     void Start() {
         if (GlobalParams.Map.ContainsKey("mode") && ((string) GlobalParams.Map["mode"]) == "load")
-            DataController.Load(refObj, prefab,(string) GlobalParams.Map["projectName"]);
+            PersistanceManager.Load(refObj, prefab,(string) GlobalParams.Map["projectName"]);
     }
 
 }

@@ -1,12 +1,11 @@
 ﻿using System;
 using UnityEngine;
 
-
 [Serializable]
 public class SketchData {
     public Vector3    Position;
-    public Quaternion Rotation;
     public Vector3    Scale;
+    public Quaternion Rotation;
     public byte[]     Texture;
 
     public SketchData(Vector3 position, Quaternion rotation, Vector3 scale, Texture texture) {

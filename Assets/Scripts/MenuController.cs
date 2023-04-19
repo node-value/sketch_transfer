@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.IO;
+using UnityEditor.Animations;
 
 public class MenuController : MonoBehaviour {
 
@@ -11,9 +13,13 @@ public class MenuController : MonoBehaviour {
 
     public TMP_InputField projectName;
 
-    public GameObject mainPanel, bodyChoosePanel, projectChoosePanel; 
+    public GameObject mainPanel, bodyChoosePanel, projectChoosePanel;
+
+    public Button buttonPrefab;
+    public Transform  scrollPanel;
 
     private BodyType bodyType = BodyType.MALE;
+    private string   selectedFile = null;
 
     void Start() {
         newProject  .onClick.AddListener(NewProjectOnClick);
@@ -33,6 +39,14 @@ public class MenuController : MonoBehaviour {
     void OpenExistingOnClick() {
         mainPanel         .SetActive(false);
         projectChoosePanel.SetActive(true);
+        foreach (string name in PersistanceManager.GetFileNames()) {
+            if (Path.GetExtension(name) == PersistanceManager.ext) {
+                Button curr = Instantiate(buttonPrefab, scrollPanel);
+                curr.GetComponentInChildren<TextMeshProUGUI>().text =
+                       Path.GetFileNameWithoutExtension(name);
+                curr.onClick.AddListener(() => selectedFile = curr.GetComponentInChildren<TextMeshProUGUI>().text);
+            }
+        }
     }
 
     void ConfirmBodyOnClick() {
@@ -47,10 +61,11 @@ public class MenuController : MonoBehaviour {
     }
     void ConfirmOpenOnClick() {
         GlobalParams.Map.Add("mode", "load");
-        GlobalParams.Map.Add("projectName", "Test1");
+        GlobalParams.Map.Add("projectName", selectedFile);
         SceneManager.LoadScene("MainScene");
     }
     void CancelOpenOnClick() {
+        foreach (Transform child in scrollPanel) Destroy(child.gameObject);
         projectChoosePanel.SetActive(false);
         mainPanel.SetActive(true);
     }

@@ -1,11 +1,13 @@
 ﻿using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-public static class DataController {
+public static class PersistanceManager {
+
+    public static readonly string ext = ".st", dataPath = Application.persistentDataPath;
+
     private static void WriteToFile(ProjectData data) {
-        File.WriteAllText($"{Application.persistentDataPath}/{data.Name}.json", JsonUtility.ToJson(data));
+        File.WriteAllText($"{dataPath}/{data.Name}{ext}", JsonUtility.ToJson(data));
     }
 
     public static void Save(Transform refObj) {
@@ -18,8 +20,12 @@ public static class DataController {
         } WriteToFile(data);
     }
 
+    public static string[] GetFileNames() {
+        return Directory.GetFiles(dataPath);
+    }
+
     private static ProjectData ReadFromFile(string projectName) {
-        string path = $"{Application.persistentDataPath}/{projectName}.json";
+        string path = $"{dataPath}/{projectName}{ext}";
         return File.Exists(path) ? JsonUtility.FromJson<ProjectData>(File.ReadAllText(path)) : null; 
     }
 
@@ -37,8 +43,7 @@ public static class DataController {
     public static void Load(Transform refObj, GameObject prefab, string projectName) {
         ProjectData data = ReadFromFile(projectName);
         if (data != null) {
-            //GlobalParams.Map.Add("projectName", data.Name);
-            GlobalParams.Map.Add("bodyType"   , data.BodyType);
+            GlobalParams.Map.Add("bodyType", data.BodyType);
             data.SketchDataList.ForEach(sketchData => CreateProjector(sketchData, refObj, prefab) );
         } else Debug.Log("Loading failed");        
     }

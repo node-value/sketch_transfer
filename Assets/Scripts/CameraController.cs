@@ -1,16 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CameraController : MonoBehaviour {
 
     public Transform cameraPivot;
     
     public  float r = 5f, rMin = 2f, rMax = 10f, sens = 2f, speed = 0.5f;
-    
-    private float _angleX = 0f, _angleY = 0f;
 
-    bool shiftPressed = false;
+    private float _angleX  = 0f,    _angleY = 0f;
+    private float _dumping = 0.03f, _treshhold = 0.5f;
+
+    private bool    shiftPressed           = false;
+    private bool    leftMouseButtonPressed = false;
+    private Vector3 velocity               = Vector3.zero;
+   
 
     private Vector3 lastMousePosition;
 
@@ -19,37 +24,68 @@ public class CameraController : MonoBehaviour {
         transform.LookAt(cameraPivot);
     }
 
-    // Start is called before the first frame update
-    void Start() {}
-
-
     void Update() {
-        if (Input.GetKeyDown(KeyCode.LeftShift)) shiftPressed = true;
-        if (Input.GetKeyUp(KeyCode.LeftShift))   shiftPressed = false;
+        MoveOnStart         ();
+        IsShiftPressed      ();
+        ZoomControl         ();
+        KeyboardAngleControl();
+        MouseAngleControl   ();
+        ComputePosition     ();
+    }
+
+    private void MoveOnStart() {
+        if (Input.GetMouseButtonDown(0)) leftMouseButtonPressed = true;
+        if (!leftMouseButtonPressed) _angleX += speed * 0.1f;
         
-        if ( shiftPressed ) {
-            r = Mathf.Clamp(r + (-Input.GetAxis("Vertical")) * (sens/32), rMin, rMax);
-        } else {
-            r = Mathf.Clamp(r + (-Input.GetAxis("Mouse ScrollWheel")) * sens, rMin, rMax);
+    }
+
+    public void Zoom(float axis) {
+        r = Mathf.Clamp(r + axis * sens, rMin, rMax);
+    }
+
+    private void ZoomControl() {
+        r = Mathf.Clamp(r + 
+            (-Input.GetAxis(shiftPressed ? "Vertical" : "Mouse ScrollWheel")) * 
+                (sens / (shiftPressed ? 32 : 1)), rMin, rMax);
+    }
+
+    private void KeyboardAngleControl() {
+        if (!shiftPressed) {
             _angleX += -Input.GetAxis("Horizontal") * speed;
             _angleY += Input.GetAxis("Vertical") * speed;
         }
+    }
 
-        if (Input.GetMouseButtonDown(0)) lastMousePosition = Input.mousePosition;
-        else if (Input.GetMouseButton(0)) {
-            Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
-            _angleX += mouseDelta.x * sens*4 * Time.deltaTime;
-            _angleY += -mouseDelta.y * sens*4 * Time.deltaTime;
-            lastMousePosition = Input.mousePosition;
+    private void MouseAngleControl() {
+        if (!EventSystem.current.IsPointerOverGameObject()) {
+            if (Input.GetMouseButtonDown(0)) {
+                lastMousePosition = Input.mousePosition;
+                velocity = Vector3.zero;
+            } else if (Input.GetMouseButton(0)) {
+                Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+                _angleX += mouseDelta.x * sens * 2 * Time.deltaTime;
+                _angleY += -mouseDelta.y * sens * 2 * Time.deltaTime;
+                lastMousePosition = Input.mousePosition;
+                velocity = mouseDelta * _dumping;
+            } else if (velocity.magnitude > _treshhold) {
+                _angleX += velocity.x * sens * 4 * Time.deltaTime;
+                _angleY += -velocity.y * sens * 4 * Time.deltaTime;
+                velocity *= (1f - _dumping);
+            }
         }
+    }
 
-        float x = cameraPivot.position.x + r * Mathf.Sin(_angleX * Mathf.Deg2Rad) * Mathf.Cos(_angleY * Mathf.Deg2Rad);
-        float y = cameraPivot.position.y + r * Mathf.Sin(_angleY * Mathf.Deg2Rad);
-        float z = cameraPivot.position.z + r * Mathf.Cos(_angleX * Mathf.Deg2Rad) * Mathf.Cos(_angleY * Mathf.Deg2Rad);
-        Vector3 newPosition = new Vector3(x, y, z);
-
-        transform.position = newPosition;
-
+    private void ComputePosition() {
+        transform.position = new Vector3(
+            cameraPivot.position.x + r * Mathf.Sin(_angleX * Mathf.Deg2Rad) * Mathf.Cos(_angleY * Mathf.Deg2Rad),
+            cameraPivot.position.y + r * Mathf.Sin(_angleY * Mathf.Deg2Rad),
+            cameraPivot.position.z + r * Mathf.Cos(_angleX * Mathf.Deg2Rad) * Mathf.Cos(_angleY * Mathf.Deg2Rad)
+        );
         transform.LookAt(cameraPivot);
+    }
+
+    private void IsShiftPressed() {
+        if (Input.GetKeyDown(KeyCode.LeftShift)) shiftPressed = true;
+        if (Input.GetKeyUp(KeyCode.LeftShift)) shiftPressed = false;
     }
 }

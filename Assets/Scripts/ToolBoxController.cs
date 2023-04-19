@@ -9,23 +9,30 @@ public class ToolBoxController : MonoBehaviour {
     public Button     
         addButton,  removeButton, pickButton, 
         viewButton, zoomInButton, zoomOutButton, 
-        saveButton;
+        saveButton, hideMenuButton;
     
     public GameObject projectorPrefab, scetchEditor, pointer;
     public Transform  referenceObject;
-    
+    public TMPro.TextMeshProUGUI projectName;
+
     private DecalProjector currProjector;
 
-    private float        moveTime = 0.0f;
-    private ToolBoxState state    = ToolBoxState.NONE;
+    private float        moveTime     = 0.0f;
+    private ToolBoxState state        = ToolBoxState.NONE;
+    private bool         isRelocating = false;
+
     void Start() {
         pointer.SetActive(false);
+        if (GlobalParams.Map.ContainsKey("projectName"))
+            projectName.text = GlobalParams.Map["projectName"] as string;
 
-        addButton.   onClick.AddListener(AddTattooOnClick);
-        pickButton.  onClick.AddListener(() => state = ToolBoxState.PICK);
-        viewButton.  onClick.AddListener(() => state = ToolBoxState.VIEW);
-        removeButton.onClick.AddListener(() => state = ToolBoxState.REMOVE);
-        saveButton  .onClick.AddListener(() => DataController.Save(referenceObject));
+        addButton    .onClick.AddListener(AddTattooOnClick);
+        pickButton   .onClick.AddListener(() => state = ToolBoxState.PICK);
+        viewButton   .onClick.AddListener(() => state = ToolBoxState.VIEW);
+        removeButton .onClick.AddListener(() => state = ToolBoxState.REMOVE);
+        saveButton   .onClick.AddListener(() => PersistanceManager.Save(referenceObject));
+        zoomInButton .onClick.AddListener(() => Camera.main.GetComponent<CameraController>().Zoom(-1f));
+        zoomOutButton.onClick.AddListener(() => Camera.main.GetComponent<CameraController>().Zoom(1f));
     }
 
     void Update() {
@@ -34,27 +41,27 @@ public class ToolBoxController : MonoBehaviour {
         EditTattoo    ();
         DeleteTattoo  ();
         DisplayPointer();
-        //Reset();
     }
     void DisplayPointer() {
         pointer.SetActive(state != ToolBoxState.NONE);
-        if (state != ToolBoxState.NONE) {
-            if (currProjector != null) {
-                pointer.transform.SetPositionAndRotation(
-                    currProjector.transform.position + currProjector.transform.forward * 0.25f,
-                    Quaternion.LookRotation(currProjector.transform.forward));
+        if (state != ToolBoxState.NONE && currProjector != null) {
+            pointer.GetComponent<FadeController>().SetState(FadeState.IN);
+            pointer.transform.SetPositionAndRotation(
+                currProjector.transform.position + currProjector.transform.forward * 0.25f,
+                Quaternion.LookRotation(currProjector.transform.forward));
 
-                pointer.transform.RotateAround(pointer.transform.position, pointer.transform.forward, Time.time * 100f);
-                pointer.transform.position = pointer.transform.position + 0.07f * Mathf.Sin(moveTime += Time.deltaTime * 3.0f) * pointer.transform.forward;
-            }   
+            pointer.transform.RotateAround(pointer.transform.position, pointer.transform.forward, Time.time * 100f);
+            pointer.transform.position = pointer.transform.position + 0.07f * Mathf.Sin(moveTime += Time.deltaTime * 3.0f) * pointer.transform.forward;
+              
         }
     }
 
     void RelocateTatto() {
         if (( state == ToolBoxState.ADD || state == ToolBoxState.VIEW )  && currProjector != null) {
+            isRelocating   = true;
             Cursor.visible = false;
             RelocateCast(state);
-            if (Input.GetMouseButtonDown(0)) { 
+            if (Input.GetMouseButtonDown(0)) {
                 Cursor.visible = true; 
                 state = ToolBoxState.PICK;
             }  
@@ -66,28 +73,14 @@ public class ToolBoxController : MonoBehaviour {
             scetchEditor.GetComponent<ScetchEditorS>().Projector = currProjector;
             if (!scetchEditor.GetComponentInParent<MyDropdown>().dropPanel.activeSelf)
                 scetchEditor.GetComponentInParent<MyDropdown>().HandleClick();
-            //currProjector = null;
-            //state = ToolBoxState.NONE;
+            isRelocating = false;
         }
     }
-
-/*
-    void Reset() {
-        if (DetectMouseOnDefault()) {
-            currProjector = null;
-            state = ToolBoxState.NONE;
-            pointer.SetActive(false);
-        }
-    }
-*/
 
     void DeleteTattoo() {
         if (state == ToolBoxState.REMOVE && currProjector != null) {
-            scetchEditor.GetComponent<ScetchEditorS>().Projector = null;
             Destroy(currProjector.gameObject);
-            currProjector = null;
-            state = ToolBoxState.NONE;
-            pointer.SetActive(false);
+            Reset();
         } 
     }
 
@@ -111,17 +104,21 @@ public class ToolBoxController : MonoBehaviour {
                         Vector3.up : currProjector.transform.up));
     }
 
-/*
-    bool DetectMouseOnDefault() {
-        return Input.GetMouseButtonDown(0) && 
-            Physics.Raycast( Camera.main.ScreenPointToRay(Input.mousePosition),
-                out RaycastHit _, Mathf.Infinity, ~(1 << LayerMask.NameToLayer("Model")));
-    }
-*/
-
     void PickCast() {
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity, 1<<LayerMask.NameToLayer("Sketches"))) 
-            currProjector = hit.collider.GetComponent<DecalProjector>();
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity, 1<<LayerMask.NameToLayer("Sketches"))) {
+            DecalProjector hitProj = hit.collider.GetComponent<DecalProjector>();
+            if (hitProj.Equals(currProjector) && !isRelocating) Reset();
+            else currProjector = hitProj;
+        }     
+    }
+    void Reset() {
+        if (scetchEditor.GetComponentInParent<MyDropdown>().dropPanel.activeSelf)
+            scetchEditor.GetComponentInParent<MyDropdown>().HandleClick();
+        scetchEditor.GetComponent<ScetchEditorS>().Projector = null;
+        currProjector = null;
+        state = ToolBoxState.NONE;
+        pointer.GetComponent<FadeController>().SetState(FadeState.OUT);
+        pointer.transform.position = Vector3.zero;
     }
 
     void AddTattooOnClick() {
