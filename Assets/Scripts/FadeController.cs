@@ -28,6 +28,7 @@ public class FadeController : MonoBehaviour {
         if (state == FadeState.OUT) {
             Color color = material.color;
             float alpha = color.a - (fadeSpeed * Time.deltaTime);
+            Debug.Log(alpha);
             color = new Color(color.r, color.g, color.b, alpha);
             material.color = color;
             if (color.a <= 0) { 

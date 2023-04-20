@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
+using SimpleFileBrowser;
 
 public class ToolBoxController : MonoBehaviour {
 
@@ -22,6 +23,9 @@ public class ToolBoxController : MonoBehaviour {
     private bool         isRelocating = false;
 
     void Start() {
+        FileBrowser.SetFilters(true, new FileBrowser.Filter("Images", ".jpg", ".png"));
+        FileBrowser.SetDefaultFilter(".png");
+
         pointer.SetActive(false);
         if (GlobalParams.Map.ContainsKey("projectName"))
             projectName.text = GlobalParams.Map["projectName"] as string;
@@ -45,7 +49,7 @@ public class ToolBoxController : MonoBehaviour {
     void DisplayPointer() {
         pointer.SetActive(state != ToolBoxState.NONE);
         if (state != ToolBoxState.NONE && currProjector != null) {
-            pointer.GetComponent<FadeController>().SetState(FadeState.IN);
+           // pointer.GetComponent<FadeController>().SetState(FadeState.IN);
             pointer.transform.SetPositionAndRotation(
                 currProjector.transform.position + currProjector.transform.forward * 0.25f,
                 Quaternion.LookRotation(currProjector.transform.forward));
@@ -117,13 +121,18 @@ public class ToolBoxController : MonoBehaviour {
         scetchEditor.GetComponent<ScetchEditorS>().Projector = null;
         currProjector = null;
         state = ToolBoxState.NONE;
-        pointer.GetComponent<FadeController>().SetState(FadeState.OUT);
+        //pointer.GetComponent<FadeController>().SetState(FadeState.OUT);
         pointer.transform.position = Vector3.zero;
     }
 
     void AddTattooOnClick() {
-        string path = EditorUtility.OpenFilePanel("Open Image", "", "png,jpg,jpeg");
-        if (path != null) CreateProjector(CreateTexture2D(path)); 
+
+
+        FileBrowser.ShowLoadDialog(
+            (paths) => CreateProjector(CreateTexture2D(paths[0])), null, FileBrowser.PickMode.Files);
+
+        //string path = EditorUtility.OpenFilePanel("Open Image", "", "png,jpg,jpeg");
+        //if (FileBrowser.Success) CreateProjector(CreateTexture2D(FileBrowser.Result[0])); 
         state = ToolBoxState.ADD;
     }
 
