@@ -126,13 +126,8 @@ public class ToolBoxController : MonoBehaviour {
     }
 
     void AddTattooOnClick() {
-
-
         FileBrowser.ShowLoadDialog(
             (paths) => CreateProjector(CreateTexture2D(paths[0])), null, FileBrowser.PickMode.Files);
-
-        //string path = EditorUtility.OpenFilePanel("Open Image", "", "png,jpg,jpeg");
-        //if (FileBrowser.Success) CreateProjector(CreateTexture2D(FileBrowser.Result[0])); 
         state = ToolBoxState.ADD;
     }
 
