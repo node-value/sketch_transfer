@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 public static class HttpAuth {
 
     public static IEnumerator Login(string username, string password, GameObject authPanel, GameObject afterAuthPanel) {
-        UnityWebRequest www = new((string)GlobalParams.Map["authURL"], "POST") {
+        using UnityWebRequest www = new(GlobalParams.Map["authURL"] as string, "POST") {
             uploadHandler   = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(new UserDTO(username, password)))),
             downloadHandler = new DownloadHandlerBuffer()
         };
@@ -27,7 +27,7 @@ public static class HttpAuth {
     }
 
     public static IEnumerator Register(string username, string password, GameObject authPanel, GameObject afterAuthPanel) {
-        UnityWebRequest www = new((string)GlobalParams.Map["regURL"], "POST") {
+        using UnityWebRequest www = new(GlobalParams.Map["regURL"] as string, "POST") {
             uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(new UserDTO(username, password)))),
             downloadHandler = new DownloadHandlerBuffer()
         };

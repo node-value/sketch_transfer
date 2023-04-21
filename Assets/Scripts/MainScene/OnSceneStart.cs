@@ -8,7 +8,7 @@ public class OnSceneStart : MonoBehaviour {
     public Transform  refObj;
 
     void Start() {
-        if (GlobalParams.Map.ContainsKey("mode") && ((string) GlobalParams.Map["mode"]) == "load")
+        if (GlobalParams.Map.ContainsKey("mode") && ((AppMode) GlobalParams.Map["mode"]) == AppMode.LOAD)
             PersistanceManager.Load(refObj, prefab,(string) GlobalParams.Map["projectName"]);
     }
 

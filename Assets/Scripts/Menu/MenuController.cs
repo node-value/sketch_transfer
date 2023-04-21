@@ -7,17 +7,21 @@ using System.IO;
 public class MenuController : MonoBehaviour {
 
     public Button
-        newProject,  openExisting, confirmBody, cancelBody,
-        confirmOpen, cancelOpen,   maleBody,    femaleBody;
+        newProject,   openExisting, confirmBody,  cancelBody,
+        confirmOpen,  cancelOpen,   maleBody,     femaleBody,
+        master,       client,       connect;
 
-    public TMP_InputField projectName;
+    public TMP_InputField projectName, masterUsername;
 
-    public GameObject mainPanel, bodyChoosePanel, projectChoosePanel;
+    public GameObject 
+        roleChoosePanel, connectPanel, 
+        mainPanel,       bodyChoosePanel, 
+        projectChoosePanel;
 
     public Button buttonPrefab;
     public Transform  scrollPanel;
 
-    private BodyType bodyType = BodyType.MALE;
+    private BodyType bodyType = BodyType.NONE;
     private string   selectedFile = null;
 
     void Start() {
@@ -29,7 +33,28 @@ public class MenuController : MonoBehaviour {
         confirmOpen .onClick.AddListener(ConfirmOpenOnClick); 
         maleBody    .onClick.AddListener(MaleBodyOnClick);    
         femaleBody  .onClick.AddListener(FemaleBodyOnClick);
+        master      .onClick.AddListener(MasterOnClick);
+        client      .onClick.AddListener(ClientOnClick);
+        connect     .onClick.AddListener(ConnectOnClick);
     }
+    void MasterOnClick() {
+        roleChoosePanel.SetActive(false);
+        mainPanel      .SetActive(true);
+    }
+
+    void ClientOnClick() {
+        GlobalParams.Map.Add("mode", AppMode.CONNECT);
+        roleChoosePanel.SetActive(false);
+        connectPanel   .SetActive(true);
+    }
+
+    void ConnectOnClick() {
+        if (masterUsername.text.Length != 0) {
+            GlobalParams.Map.Add("masterUsername", masterUsername.text);
+            connectPanel.SetActive(false);
+            SceneManager.LoadScene("MainScene");
+        } else Debug.Log("Username must not be empty");
+    } 
 
     void NewProjectOnClick() { 
         mainPanel      .SetActive(false);
@@ -49,19 +74,23 @@ public class MenuController : MonoBehaviour {
     }
 
     void ConfirmBodyOnClick() {
-        GlobalParams.Map.Add("bodyType",    bodyType);
-        GlobalParams.Map.Add("projectName", projectName.text);
+        if (bodyType != BodyType.NONE && projectName.text.Length != 0) {
+            GlobalParams.Map.Add("bodyType", bodyType);
+            GlobalParams.Map.Add("projectName", projectName.text);
 
-        SceneManager.LoadScene("MainScene");
+            SceneManager.LoadScene("MainScene");
+        } else Debug.Log("Pick a body type and type a project name");
     }
     void CancelBodyOnClick() {
         bodyChoosePanel.SetActive(false);
         mainPanel      .SetActive(true);
     }
     void ConfirmOpenOnClick() {
-        GlobalParams.Map.Add("mode", "load");
-        GlobalParams.Map.Add("projectName", selectedFile);
-        SceneManager.LoadScene("MainScene");
+        if (selectedFile != null) {
+            GlobalParams.Map.Add("mode", AppMode.LOAD);
+            GlobalParams.Map.Add("projectName", selectedFile);
+            SceneManager.LoadScene("MainScene");
+        } else Debug.Log("Pick existing project");
     }
     void CancelOpenOnClick() {
         foreach (Transform child in scrollPanel) Destroy(child.gameObject);

@@ -1,5 +1,5 @@
 ﻿
 public enum BodyType {
-    MALE, FEMALE
+    MALE, FEMALE, NONE
 }
 
