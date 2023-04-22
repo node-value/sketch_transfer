@@ -8,11 +8,7 @@ public static class PersistanceManager {
     public static readonly string ext = ".st", dataPath = Application.persistentDataPath;
 
     private static void WriteToFile(ProjectData data) {
-        File.WriteAllText($"{dataPath}/{data.Name}{ext}", JsonUtility.ToJson(data));
-  
-        //using FileStream stream = new($"{dataPath}/{data.Name}{ext}", FileMode.Create);
-        //new BinaryFormatter().Serialize(stream, data);
-        
+        File.WriteAllText($"{dataPath}/{data.Name}{ext}", JsonUtility.ToJson(data));      
     }
 
     private static ProjectData GetProjectData(Transform refObj) {
@@ -55,12 +51,7 @@ public static class PersistanceManager {
     }
 
     public static void SetProjectData(string dataRaw, Transform refObj, GameObject prefab) {
-        Debug.Log("start set project data");
-
         ProjectData data = JsonUtility.FromJson<ProjectData>(dataRaw);
-
-        Debug.Log("data mapped to an object");
-        Debug.Log(data.Name + " " + data.BodyType);
         GlobalParams.Map.Add("bodyType", data.BodyType);
         data.SketchDataList.ForEach(sketchData => CreateProjector(sketchData, refObj, prefab));
     }

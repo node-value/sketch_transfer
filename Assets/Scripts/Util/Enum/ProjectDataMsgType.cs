@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 [Serializable]
 public enum ProjectDataMsgType {
-    CHECK, INITIAL, REMOVE, ADD, MOVE
+    CHECK, INITIAL, DELETE, ADD, MOVE
 }

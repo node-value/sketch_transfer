@@ -17,6 +17,8 @@ public class ToolBoxController : MonoBehaviour {
     public Transform  referenceObject;
     public TMPro.TextMeshProUGUI projectName;
 
+    public GameObject connection;
+
     private DecalProjector currProjector;
 
     private float        moveTime     = 0.0f;
@@ -50,7 +52,6 @@ public class ToolBoxController : MonoBehaviour {
     void DisplayPointer() {
         pointer.SetActive(state != ToolBoxState.NONE);
         if (state != ToolBoxState.NONE && currProjector != null) {
-           // pointer.GetComponent<FadeController>().SetState(FadeState.IN);
             pointer.transform.SetPositionAndRotation(
                 currProjector.transform.position + currProjector.transform.forward * 0.25f,
                 Quaternion.LookRotation(currProjector.transform.forward));
@@ -84,6 +85,7 @@ public class ToolBoxController : MonoBehaviour {
 
     void DeleteTattoo() {
         if (state == ToolBoxState.REMOVE && currProjector != null) {
+            connection.GetComponent<ProjectConnectionController>().SendDeleteData(currProjector.gameObject.transform.GetSiblingIndex());
             Destroy(currProjector.gameObject);
             Reset();
         } 
@@ -116,13 +118,12 @@ public class ToolBoxController : MonoBehaviour {
             else currProjector = hitProj;
         }     
     }
-    void Reset() {
+    public void Reset() {
         if (scetchEditor.GetComponentInParent<MyDropdown>().dropPanel.activeSelf)
             scetchEditor.GetComponentInParent<MyDropdown>().HandleClick();
         scetchEditor.GetComponent<ScetchEditorS>().Projector = null;
         currProjector = null;
         state = ToolBoxState.NONE;
-        //pointer.GetComponent<FadeController>().SetState(FadeState.OUT);
         pointer.transform.position = Vector3.zero;
     }
 

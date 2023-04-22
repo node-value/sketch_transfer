@@ -5176,6 +5176,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   refObject: {fileID: 323495371}
   prefab: {fileID: 1677917655195625334, guid: f959cb1e478f50a44ba42153c152c96c, type: 3}
+  toolBox: {fileID: 1519593465}
 --- !u!4 &765455218
 Transform:
   m_ObjectHideFlags: 0
@@ -10260,6 +10261,7 @@ MonoBehaviour:
   pointer: {fileID: 1801250801}
   referenceObject: {fileID: 323495371}
   projectName: {fileID: 1670665981}
+  connection: {fileID: 765455216}
 --- !u!1 &1521470479
 GameObject:
   m_ObjectHideFlags: 0
