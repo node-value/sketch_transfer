@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -7,11 +8,12 @@ using WebSocketSharp.Net;
 public class ProjectConnectionController : MonoBehaviour {
 
     private WebSocket ws;
-    public Button send;
+    public Transform refObject;
+    public GameObject prefab;
 
     void Start() {
         Connect();
-        SendOnStart();
+        UnityMainThreadDispatcher.Instance().Enqueue(() => SendOnStart());
     }
 
     void Connect() {
@@ -27,6 +29,7 @@ public class ProjectConnectionController : MonoBehaviour {
 
     void HandleMessage(object sender, MessageEventArgs e) {
         ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
+        Debug.Log("Received a message: " + e.Data);
         if (response.type == ProjectDataMsgType.CHECK) {
             if (response.data == "OK") {
                 Debug.Log("Requested master is online");
@@ -35,12 +38,42 @@ public class ProjectConnectionController : MonoBehaviour {
                 SceneManager.LoadScene("Menu");
                 SceneManager.UnloadSceneAsync("MainScene");
             }
+        } 
+
+        if (response.type == ProjectDataMsgType.INITIAL) {
+            Debug.Log("Received initial request");
+            if (response.data.Equals("GET_INITIAL")) {
+                Debug.Log("Start stending project data");
+                UnityMainThreadDispatcher.Instance().Enqueue(SendInitialData(response, refObject));
+            } else {
+                Debug.Log("Received initial data from user: " + response.sender + " ok size: " + response.data.Length);
+                PersistanceManager.SetProjectData(response.data, refObject, prefab);
+                Debug.Log("Set data to projext");
+            }
         }
+    }
+
+    IEnumerator SendInitialData(ProjectDataDTO response, Transform referObject) {
+        yield return null; 
+        ws.Send(JsonUtility.ToJson(
+            new ProjectDataDTO(
+                ProjectDataMsgType.INITIAL,
+                response.receiver,
+                response.sender,
+                PersistanceManager.GetProjectDataRaw(referObject)
+        )));
+        Debug.Log("Respond to initial request: Sent all project data");
     }
 
     void SendOnStart() {
         if (GlobalParams.Map.ContainsKey("mode") && (AppMode) GlobalParams.Map["mode"] == AppMode.CONNECT) {
-            ws.Send(JsonUtility.ToJson(new ProjectDataDTO(ProjectDataMsgType.CHECK, GlobalParams.Map["masterUsername"] as string, "")));
+            ws.Send(JsonUtility.ToJson(
+                new ProjectDataDTO(
+                    ProjectDataMsgType.CHECK, 
+                    GlobalParams.Map["username"]       as string,
+                    GlobalParams.Map["masterUsername"] as string, 
+                    ""
+            )));
             Debug.Log("Sent to receiver with name: " + GlobalParams.Map["masterUsername"] as string);
         } else {
             Debug.Log("SendOnStart failed");

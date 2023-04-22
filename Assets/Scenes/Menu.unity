@@ -539,7 +539,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30c0e9daa3136f2479f93ef0980f5e6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  authPanel: {fileID: 185822684}
+  authPanel: {fileID: 145441839}
   afterAuthPanel: {fileID: 541271473}
   signInPanel: {fileID: 185822684}
   signUpPanel: {fileID: 797640504}

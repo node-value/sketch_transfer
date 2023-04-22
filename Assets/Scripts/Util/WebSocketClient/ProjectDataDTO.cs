@@ -4,10 +4,10 @@
 public class ProjectDataDTO {
 
     public ProjectDataMsgType type;
-    public string receiver, data;
+    public string sender, receiver, data;
     
-    public ProjectDataDTO(ProjectDataMsgType type, string receiver, string data) {
-        this.type = type; this.receiver = receiver; this.data = data;
+    public ProjectDataDTO(ProjectDataMsgType type, string sender, string receiver, string data) {
+        this.type = type; this.sender = sender; this.receiver = receiver; this.data = data;
     }
 }
 

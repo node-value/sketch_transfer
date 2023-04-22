@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using SimpleFileBrowser;
+using UnityEditor.Rendering;
 
 public class ToolBoxController : MonoBehaviour {
 
@@ -30,11 +31,11 @@ public class ToolBoxController : MonoBehaviour {
         if (GlobalParams.Map.ContainsKey("projectName"))
             projectName.text = GlobalParams.Map["projectName"] as string;
 
-        addButton    .onClick.AddListener(AddTattooOnClick);
-        pickButton   .onClick.AddListener(() => state = ToolBoxState.PICK);
-        viewButton   .onClick.AddListener(() => state = ToolBoxState.VIEW);
-        removeButton .onClick.AddListener(() => state = ToolBoxState.REMOVE);
-        saveButton   .onClick.AddListener(() => PersistanceManager.Save(referenceObject));
+        addButton.onClick.AddListener(AddTattooOnClick);
+        pickButton.onClick.AddListener(   () => state = ToolBoxState.PICK);
+        viewButton.onClick.AddListener(   () => state = ToolBoxState.VIEW);
+        removeButton.onClick.AddListener( () => state = ToolBoxState.REMOVE);
+        saveButton.onClick.AddListener(   () => PersistanceManager.Save(referenceObject));
         zoomInButton .onClick.AddListener(() => Camera.main.GetComponent<CameraController>().Zoom(-1f));
         zoomOutButton.onClick.AddListener(() => Camera.main.GetComponent<CameraController>().Zoom(1f));
     }

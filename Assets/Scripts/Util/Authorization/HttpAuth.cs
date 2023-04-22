@@ -22,6 +22,7 @@ public static class HttpAuth {
         }
         Debug.Log("Login successful!");
         GlobalParams.Map.Add("token", JsonUtility.FromJson<TokenDTO>(www.downloadHandler.text).token);
+        GlobalParams.Map.Add("username", username);
         authPanel.SetActive(false);
         afterAuthPanel.SetActive(true);
     }
@@ -39,8 +40,9 @@ public static class HttpAuth {
             Debug.LogError(www.error);
             yield break;
         } 
-        Debug.Log("Login successful!");
+        Debug.Log("Register successful!");
         GlobalParams.Map.Add("token", JsonUtility.FromJson<TokenDTO>(www.downloadHandler.text));
+        GlobalParams.Map.Add("username", username);
         authPanel.SetActive(false);
         afterAuthPanel.SetActive(true);
     }

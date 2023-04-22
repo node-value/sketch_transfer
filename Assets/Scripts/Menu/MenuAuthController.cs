@@ -33,7 +33,7 @@ public class MenuAuthController : MonoBehaviour {
     }
     void SignUpOnClick() {
         if (upUsername.text != "" && upPassword.text != "") {
-            StartCoroutine(HttpAuth.Login(upUsername.text, upPassword.text, authPanel, afterAuthPanel));
+            StartCoroutine(HttpAuth.Register(upUsername.text, upPassword.text, authPanel, afterAuthPanel));
         } else {
             Debug.Log("Username and password must not be empty!");
         }
