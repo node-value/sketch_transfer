@@ -39,14 +39,22 @@ public static class PersistanceManager {
     }
 
     private static Texture2D CreateTexture(byte[] data) { 
-        Texture2D texture = new(2,2); texture.LoadImage(data);
+        Texture2D texture = new(2,2); 
+        texture.LoadImage(data);
         return texture;
+    }
+    private static Texture2D ResizeTexture(Texture2D texture) {
+        Texture2D result = new(texture.width / 4, texture.height / 4);
+        Graphics.ConvertTexture(texture, result);
+        return result;
     }
 
     private static void CreateProjector(SketchData data, Transform refObj, GameObject prefab) {
         DecalProjector projector = Object.Instantiate(prefab, data.Position, data.Rotation, refObj).GetComponent<DecalProjector>();
         projector.material = Material.Instantiate(projector.material);
-        projector.material.SetTexture("Base_Map", CreateTexture(data.Texture));
+        Texture2D texture = CreateTexture(data.Texture);
+        projector.material.SetTexture("Base_Map", texture);
+        projector.gameObject.GetComponent<TextureHolder>().texture = ResizeTexture(texture); 
         projector.size = data.Scale;
     }
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Xml.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -17,16 +16,23 @@ public class ProjectConnectionController : MonoBehaviour {
     public GameObject prefab;
     public GameObject toolBox;
 
+    private bool isConnected;
 
     void Start() {
-        wsCheck   = ConnectToWebSocket(wsCheck,   HandleCheckMessage,   "check");
-        wsInitial = ConnectToWebSocket(wsInitial, HandleInitialMessage, "initial");
-        wsDelete  = ConnectToWebSocket(wsDelete,  HandleDeleteMessage,  "delete");
-        wsAdd     = ConnectToWebSocket(wsAdd,     HandleAddMessage,     "add");
-        wsMove    = ConnectToWebSocket(wsMove,    HandleMoveMessage,    "move");
-
-        if (GlobalParams.Map.ContainsKey("mode") && (AppMode)GlobalParams.Map["mode"] == AppMode.CONNECT)
+        isConnected = GlobalParams.Map.ContainsKey("mode") && (AppMode)GlobalParams.Map["mode"] == AppMode.CONNECT;
+        wsCheck = ConnectToWebSocket(wsCheck,   HandleCheckMessage,   "check");
+        if (isConnected) {
+            StartConnections();
             SendCheckData();
+        }
+    }
+
+    void StartConnections() {
+        isConnected = true;
+        wsInitial = ConnectToWebSocket(wsInitial, HandleInitialMessage, "initial");
+        wsDelete = ConnectToWebSocket(wsDelete, HandleDeleteMessage, "delete");
+        wsAdd = ConnectToWebSocket(wsAdd, HandleAddMessage, "add");
+        wsMove = ConnectToWebSocket(wsMove, HandleMoveMessage, "move");
     }
 
     WebSocket ConnectToWebSocket(WebSocket socket, EventHandler<MessageEventArgs> handler, string endPoint) {
@@ -38,6 +44,7 @@ public class ProjectConnectionController : MonoBehaviour {
             socket.Connect();
             return socket;
         } Debug.Log("Auth token is absent, try to login again");
+        isConnected = false;
         return null;
     }
 
@@ -45,10 +52,12 @@ public class ProjectConnectionController : MonoBehaviour {
         ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
         Debug.Log("Received a message: " + e.Data);
         if (response.data == "GET_INITIAL") {
+            StartConnections();
             if (!GlobalParams.Map.ContainsKey("masterUsername")) GlobalParams.Map["masterUsername"] = response.sender;
             Debug.Log("Sending initial data");
             SendInitialData(response, refObject);
         } else {
+            isConnected = false;
             Debug.Log("Requested master id offline, either connect to another or load in master mode");
             //SceneManager.LoadScene("Menu");
             //SceneManager.UnloadSceneAsync("MainScene");
@@ -61,32 +70,38 @@ public class ProjectConnectionController : MonoBehaviour {
         if (response.data != "FAILED") {
             UnityMainThreadDispatcher.Instance().Enqueue(() => PersistanceManager.SetProjectData(response.data, refObject, prefab));
         } else {
+            isConnected = false;
             Debug.Log("Requested master is offline, either connect to another or load in master mode");
         }
     }
 
     void HandleDeleteMessage(object _, MessageEventArgs e) {
+        toolBox.GetComponent<ToolBoxController>().Reset();
         ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
         Debug.Log("Received delete data from user: " + response.sender + " ok size: " + response.data.Length);
         if (response.data != "FAILED") {
             Destroy(refObject.GetChild(int.Parse(response.data)).gameObject);
             toolBox.GetComponent<ToolBoxController>().Reset();
         } else {
+            isConnected = false;
             Debug.Log("Connection failed");
         }
     }
 
     void HandleAddMessage(object _, MessageEventArgs e) {
+        toolBox.GetComponent<ToolBoxController>().Reset();
         ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
         Debug.Log("Received Add data from user: " + response.sender + " ok size: " + response.data.Length);
         if (response.data != "FAILED") {
             UnityMainThreadDispatcher.Instance().Enqueue(() => CreateProjector(JsonUtility.FromJson<SketchData>(response.data), refObject, prefab));
         } else {
+            isConnected = false;
             Debug.Log("Connection failed");
         }
     }
 
     void HandleMoveMessage(object _, MessageEventArgs e) {
+        toolBox.GetComponent<ToolBoxController>().Reset();
         ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
         Debug.Log("Received Add data from user: " + response.sender + " ok size: " + response.data.Length);
         if (response.data != "FAILED") {
@@ -95,8 +110,8 @@ public class ProjectConnectionController : MonoBehaviour {
             child.SetPositionAndRotation(moveData.Position, moveData.Rotation);
             child.localScale = moveData.Scale;
             child.gameObject.GetComponent<DecalProjector>().size = moveData.Scale;
-            
         } else {
+            isConnected = false;
             Debug.Log("Connection failed");
         }
     }
@@ -111,30 +126,35 @@ public class ProjectConnectionController : MonoBehaviour {
     }
 
     private void SendCheckData() {
-        UnityMainThreadDispatcher.Instance().Enqueue(
-            SendData(
-                wsCheck, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], "GET_INITIAL"));
+        if (isConnected)
+            UnityMainThreadDispatcher.Instance().Enqueue(
+                SendData(
+                    wsCheck, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], "GET_INITIAL"));
     }
 
     private void SendInitialData(ProjectDataDTO response, Transform referObject) {
-        UnityMainThreadDispatcher.Instance().Enqueue(
-            SendDataInit(wsInitial, response.receiver, response.sender, referObject));
+        if (isConnected)
+            UnityMainThreadDispatcher.Instance().Enqueue(
+                SendDataInit(wsInitial, response.receiver, response.sender, referObject));
     }
 
     public void SendDeleteData(int childN) {
-        UnityMainThreadDispatcher.Instance().Enqueue(
-            SendData(
-                wsDelete, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], childN+""));
+        if (isConnected)
+            UnityMainThreadDispatcher.Instance().Enqueue(
+                SendData(
+                    wsDelete, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], childN+""));
     }
 
     public void SendAddData(SketchData data) {
-        UnityMainThreadDispatcher.Instance().Enqueue(
-            SendData(wsAdd, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
+        if (isConnected)
+            UnityMainThreadDispatcher.Instance().Enqueue(
+                SendData(wsAdd, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
     }
 
     public void SendMoveData(ProjectorDataDTO data) {
-        UnityMainThreadDispatcher.Instance().Enqueue(
-            SendData(wsMove, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
+        if (isConnected)
+            UnityMainThreadDispatcher.Instance().Enqueue(
+                SendData(wsMove, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
     }
 
 
@@ -147,44 +167,15 @@ public class ProjectConnectionController : MonoBehaviour {
     private void CreateProjector(SketchData data, Transform refObj, GameObject prefab) {
         DecalProjector projector = UnityEngine.Object.Instantiate(prefab, data.Position, data.Rotation, refObj).GetComponent<DecalProjector>();
         projector.material = Material.Instantiate(projector.material);
-        projector.material.SetTexture("Base_Map", CreateTexture(data.Texture));
+        Texture2D texture = CreateTexture(data.Texture);
+        projector.material.SetTexture("Base_Map", texture);
+        projector.gameObject.GetComponent<TextureHolder>().texture = ResizeTexture(texture);
         projector.size = data.Scale;
     }
 
-
-    /*
-    IEnumerator SendInitialData(ProjectDataDTO response, Transform referObject) {
-        yield return null;
-        wsInitial.Send(JsonUtility.ToJson(
-            new ProjectDataDTO(
-                response.receiver,
-                response.sender,
-                PersistanceManager.GetProjectDataRaw(referObject)
-        )));
-        Debug.Log("Respond to initial request: Sent all project data");
+    private Texture2D ResizeTexture(Texture2D texture) {
+        Texture2D result = new(texture.width / 4, texture.height / 4);
+        Graphics.ConvertTexture(texture, result);
+        return result;
     }
-    
-
-    IEnumerator SendDeleteData(int childN) {
-        yield return null;
-        wsDelete.Send(JsonUtility.ToJson(
-            new ProjectDataDTO(
-                    GlobalParams.Map["username"] as string,
-                    GlobalParams.Map["masterUsername"] as string,
-                    childN + ""
-        )));
-        Debug.Log("Sending delete data");
-    }
-
-    IEnumerator CheckOnStart(WebSocket soket) {
-        yield return null;
-        soket.Send(JsonUtility.ToJson(
-            new ProjectDataDTO(
-                GlobalParams.Map["username"] as string,
-                GlobalParams.Map["masterUsername"] as string,
-                "GET_INITIAL"
-        )));
-        Debug.Log("Sent to receiver with name: " + GlobalParams.Map["masterUsername"] as string);
-    }
-    */
 }

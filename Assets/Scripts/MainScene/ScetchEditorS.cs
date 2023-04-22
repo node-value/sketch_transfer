@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
@@ -9,12 +10,15 @@ public class ScetchEditorS : MonoBehaviour {
 
     public GameObject connection;
 
+    private List<Texture> resizedlist;
+
     public DecalProjector Projector { 
         get { return _projector; }
         set { _projector = value; OnProjectorChanged(value); } 
     } private DecalProjector _projector;
 
     void Start() {
+
         scaleSlider .onValueChanged.AddListener(OnScaleChanged);
         rotateSlider.onValueChanged.AddListener(OnRotateChanged);
         depthSlider .onValueChanged.AddListener(OnDepthChanged);
@@ -27,9 +31,8 @@ public class ScetchEditorS : MonoBehaviour {
             scaleSlider.value = Projector.size.x;
             rotateSlider.value = Projector.transform.rotation.eulerAngles.z;
             depthSlider.value = Projector.size.z;
-            
-            Texture2D t = ResizeTexture((Texture2D)Projector.material.GetTexture("Base_Map"));
-        
+
+            Texture2D t = Projector.gameObject.GetComponent<TextureHolder>().texture;
             scetch.GetComponent<Image>().sprite = Sprite.Create(t, new(0, 0, t.width, t.height), Vector2.one * 0.5f); 
         }
         SwitchEditPanel(value != null);

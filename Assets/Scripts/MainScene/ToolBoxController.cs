@@ -5,6 +5,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using SimpleFileBrowser;
 using UnityEditor.Rendering;
+using UnityEngine.EventSystems;
 
 public class ToolBoxController : MonoBehaviour {
 
@@ -16,13 +17,12 @@ public class ToolBoxController : MonoBehaviour {
     public GameObject projectorPrefab, scetchEditor, pointer;
     public Transform  referenceObject;
     public TMPro.TextMeshProUGUI projectName;
-
     public GameObject connection;
 
     private DecalProjector currProjector;
 
+    private ToolBoxState state = ToolBoxState.NONE;
     private float        moveTime     = 0.0f;
-    private ToolBoxState state        = ToolBoxState.NONE;
     private bool         isRelocating = false;
 
     void Start() {
@@ -34,9 +34,9 @@ public class ToolBoxController : MonoBehaviour {
             projectName.text = GlobalParams.Map["projectName"] as string;
 
         addButton.onClick.AddListener(AddTattooOnClick);
-        pickButton.onClick.AddListener(   () => state = ToolBoxState.PICK);
-        viewButton.onClick.AddListener(   () => state = ToolBoxState.VIEW);
-        removeButton.onClick.AddListener( () => state = ToolBoxState.REMOVE);
+        pickButton.onClick.AddListener(   () => { Reset(); state = ToolBoxState.PICK;   });
+        viewButton.onClick.AddListener(   () => { Reset(); state = ToolBoxState.VIEW;   });
+        removeButton.onClick.AddListener( () => { Reset(); state = ToolBoxState.REMOVE; });
         saveButton.onClick.AddListener(   () => PersistanceManager.Save(referenceObject));
         zoomInButton .onClick.AddListener(() => Camera.main.GetComponent<CameraController>().Zoom(-1f));
         zoomOutButton.onClick.AddListener(() => Camera.main.GetComponent<CameraController>().Zoom(1f));
@@ -65,15 +65,15 @@ public class ToolBoxController : MonoBehaviour {
     void RelocateTatto() {
         if (( state == ToolBoxState.ADD || state == ToolBoxState.VIEW )  && currProjector != null) {
             isRelocating   = true;
-            Cursor.visible = false;
+            //Cursor.visible = false;
             RelocateCast(state);
-            if (Input.GetMouseButtonDown(0)) {
+            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject()) {
                 if (state == ToolBoxState.ADD) {
                     Transform obj = currProjector.transform;
                     connection.GetComponent<ProjectConnectionController>().SendAddData( 
                         new SketchData(obj.position, obj.rotation, obj.localScale, currProjector.material.GetTexture("Base_Map"))); ;
                 }
-                Cursor.visible = true; 
+                //Cursor.visible = true; 
                 state = ToolBoxState.PICK;
             }  
         }
@@ -90,7 +90,8 @@ public class ToolBoxController : MonoBehaviour {
 
     void DeleteTattoo() {
         if (state == ToolBoxState.REMOVE && currProjector != null) {
-            connection.GetComponent<ProjectConnectionController>().SendDeleteData(currProjector.gameObject.transform.GetSiblingIndex());
+            int i = currProjector.gameObject.transform.GetSiblingIndex();
+            connection.GetComponent<ProjectConnectionController>().SendDeleteData(i);
             Destroy(currProjector.gameObject);
             Reset();
         } 
@@ -135,6 +136,7 @@ public class ToolBoxController : MonoBehaviour {
     }
 
     void AddTattooOnClick() {
+        Reset();
         FileBrowser.ShowLoadDialog(
             (paths) => CreateProjector(CreateTexture2D(paths[0])), null, FileBrowser.PickMode.Files);
         state = ToolBoxState.ADD;
@@ -143,12 +145,21 @@ public class ToolBoxController : MonoBehaviour {
     void CreateProjector(Texture2D texture) { 
         currProjector = Instantiate(projectorPrefab, new(0,0,0), new(), referenceObject).GetComponent<DecalProjector>();
         currProjector.material = Material.Instantiate(currProjector.material);
-        currProjector.material.SetTexture("Base_Map", texture); 
+        currProjector.material.SetTexture("Base_Map", texture);
+
+        currProjector.gameObject.GetComponent<TextureHolder>().texture = ResizeTexture(texture);
+
     }
 
     Texture2D CreateTexture2D(string path) {
         Texture2D texture = new(2, 2);
         texture.LoadImage(File.ReadAllBytes(path));
         return texture;
-    } 
+    }
+
+    Texture2D ResizeTexture(Texture2D texture) {
+        Texture2D result = new(texture.width / 4, texture.height / 4);
+        Graphics.ConvertTexture(texture, result);
+        return result;
+    }
 }
