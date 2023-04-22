@@ -1,10 +1,8 @@
 using System.IO;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using SimpleFileBrowser;
-using UnityEditor.Rendering;
 using UnityEngine.EventSystems;
 
 public class ToolBoxController : MonoBehaviour {
@@ -12,7 +10,7 @@ public class ToolBoxController : MonoBehaviour {
     public Button     
         addButton,  removeButton, pickButton, 
         viewButton, zoomInButton, zoomOutButton, 
-        saveButton, hideMenuButton;
+        saveButton;
     
     public GameObject projectorPrefab, scetchEditor, pointer;
     public Transform  referenceObject;
@@ -48,7 +46,14 @@ public class ToolBoxController : MonoBehaviour {
         EditTattoo    ();
         DeleteTattoo  ();
         DisplayPointer();
+        SetProjectName();
     }
+    void SetProjectName() {
+        if (projectName.text == "project_name.st")
+            if (GlobalParams.Map.ContainsKey("projectName"))
+                projectName.text = GlobalParams.Map["projectName"] as string + "_client";
+    }
+
     void DisplayPointer() {
         pointer.SetActive(state != ToolBoxState.NONE);
         if (state != ToolBoxState.NONE && currProjector != null) {
@@ -65,7 +70,7 @@ public class ToolBoxController : MonoBehaviour {
     void RelocateTatto() {
         if (( state == ToolBoxState.ADD || state == ToolBoxState.VIEW )  && currProjector != null) {
             isRelocating   = true;
-            //Cursor.visible = false;
+            Cursor.visible = false;
             RelocateCast(state);
             if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject()) {
                 if (state == ToolBoxState.ADD) {
@@ -73,7 +78,7 @@ public class ToolBoxController : MonoBehaviour {
                     connection.GetComponent<ProjectConnectionController>().SendAddData( 
                         new SketchData(obj.position, obj.rotation, obj.localScale, currProjector.material.GetTexture("Base_Map"))); ;
                 }
-                //Cursor.visible = true; 
+                Cursor.visible = true; 
                 state = ToolBoxState.PICK;
             }  
         }

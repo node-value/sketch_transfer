@@ -1,10 +1,8 @@
 using System;
 using System.Collections;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using WebSocketSharp;
 using WebSocketSharp.Net;
 
@@ -15,11 +13,13 @@ public class ProjectConnectionController : MonoBehaviour {
     public Transform refObject;
     public GameObject prefab;
     public GameObject toolBox;
+    public GameObject loadingAnim;
 
     private bool isConnected;
 
     void Start() {
         isConnected = GlobalParams.Map.ContainsKey("mode") && (AppMode)GlobalParams.Map["mode"] == AppMode.CONNECT;
+        loadingAnim.SetActive(isConnected && !GlobalParams.Map.ContainsKey("bodyType"));
         wsCheck = ConnectToWebSocket(wsCheck,   HandleCheckMessage,   "check");
         if (isConnected) {
             StartConnections();
@@ -30,9 +30,9 @@ public class ProjectConnectionController : MonoBehaviour {
     void StartConnections() {
         isConnected = true;
         wsInitial = ConnectToWebSocket(wsInitial, HandleInitialMessage, "initial");
-        wsDelete = ConnectToWebSocket(wsDelete, HandleDeleteMessage, "delete");
-        wsAdd = ConnectToWebSocket(wsAdd, HandleAddMessage, "add");
-        wsMove = ConnectToWebSocket(wsMove, HandleMoveMessage, "move");
+        wsDelete  = ConnectToWebSocket(wsDelete,  HandleDeleteMessage,  "delete");
+        wsAdd     = ConnectToWebSocket(wsAdd,     HandleAddMessage,     "add");
+        wsMove    = ConnectToWebSocket(wsMove,    HandleMoveMessage,    "move");
     }
 
     WebSocket ConnectToWebSocket(WebSocket socket, EventHandler<MessageEventArgs> handler, string endPoint) {
@@ -59,8 +59,9 @@ public class ProjectConnectionController : MonoBehaviour {
         } else {
             isConnected = false;
             Debug.Log("Requested master id offline, either connect to another or load in master mode");
-            //SceneManager.LoadScene("Menu");
-            //SceneManager.UnloadSceneAsync("MainScene");
+            SceneManager.UnloadSceneAsync("MainScene");
+            SceneManager.LoadScene("Menu");
+            
         }
     }
 
@@ -68,6 +69,7 @@ public class ProjectConnectionController : MonoBehaviour {
         ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
         Debug.Log("Received initial data from user: " + response.sender + " ok size: " + response.data.Length);
         if (response.data != "FAILED") {
+            loadingAnim.SetActive(false);
             UnityMainThreadDispatcher.Instance().Enqueue(() => PersistanceManager.SetProjectData(response.data, refObject, prefab));
         } else {
             isConnected = false;

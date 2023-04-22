@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -61,6 +60,7 @@ public static class PersistanceManager {
     public static void SetProjectData(string dataRaw, Transform refObj, GameObject prefab) {
         ProjectData data = JsonUtility.FromJson<ProjectData>(dataRaw);
         GlobalParams.Map.Add("bodyType", data.BodyType);
+        if (!GlobalParams.Map.ContainsKey("projectName")) GlobalParams.Map.Add("projectName", data.Name);
         data.SketchDataList.ForEach(sketchData => CreateProjector(sketchData, refObj, prefab));
     }
 
