@@ -5,7 +5,7 @@ public static class GlobalParams {
         { "authURL", "http://localhost:8080/api/auth/authenticate"},
         { "regURL",  "http://localhost:8080/api/auth/register"},
         { "chatURL", "ws://localhost:8080/ws_chat"},
-        { "projectURL", "ws://localhost:8080/ws_project"}
+        { "projectBaseURL", "ws://localhost:8080/ws_project"}
     };
 }
 
