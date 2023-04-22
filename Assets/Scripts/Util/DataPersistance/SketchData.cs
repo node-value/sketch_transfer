@@ -12,7 +12,7 @@ public class SketchData {
         this.Position = position; 
         this.Rotation = rotation; 
         this.Scale    = scale; 
-        this.Texture  = ((Texture2D) texture).EncodeToPNG();
+        this.Texture  = texture == null ? null : ((Texture2D) texture).EncodeToPNG();
     }
 
 }

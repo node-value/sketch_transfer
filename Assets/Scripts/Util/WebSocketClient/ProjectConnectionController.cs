@@ -23,6 +23,7 @@ public class ProjectConnectionController : MonoBehaviour {
         wsInitial = ConnectToWebSocket(wsInitial, HandleInitialMessage, "initial");
         wsDelete  = ConnectToWebSocket(wsDelete,  HandleDeleteMessage,  "delete");
         wsAdd     = ConnectToWebSocket(wsAdd,     HandleAddMessage,     "add");
+        wsMove    = ConnectToWebSocket(wsMove,    HandleMoveMessage,    "move");
 
         if (GlobalParams.Map.ContainsKey("mode") && (AppMode)GlobalParams.Map["mode"] == AppMode.CONNECT)
             SendCheckData();
@@ -85,6 +86,21 @@ public class ProjectConnectionController : MonoBehaviour {
         }
     }
 
+    void HandleMoveMessage(object _, MessageEventArgs e) {
+        ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
+        Debug.Log("Received Add data from user: " + response.sender + " ok size: " + response.data.Length);
+        if (response.data != "FAILED") {
+            ProjectorDataDTO moveData = JsonUtility.FromJson<ProjectorDataDTO>(response.data);
+            Transform child = refObject.GetChild(moveData.Index);
+            child.SetPositionAndRotation(moveData.Position, moveData.Rotation);
+            child.localScale = moveData.Scale;
+            child.gameObject.GetComponent<DecalProjector>().size = moveData.Scale;
+            
+        } else {
+            Debug.Log("Connection failed");
+        }
+    }
+
     IEnumerator SendData(WebSocket socket, string sender, string receiver, string data) {
         yield return null;
         socket.Send(JsonUtility.ToJson(new ProjectDataDTO(sender, receiver, data)));
@@ -114,6 +130,11 @@ public class ProjectConnectionController : MonoBehaviour {
     public void SendAddData(SketchData data) {
         UnityMainThreadDispatcher.Instance().Enqueue(
             SendData(wsAdd, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
+    }
+
+    public void SendMoveData(ProjectorDataDTO data) {
+        UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData(wsMove, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
     }
 
 

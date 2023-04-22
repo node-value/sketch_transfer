@@ -107,13 +107,15 @@ public class ToolBoxController : MonoBehaviour {
     void RelocateCast(ToolBoxState state) {
         int layerMask = 1 << LayerMask.NameToLayer("Model");
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask))
-            currProjector.transform.SetPositionAndRotation(
-                hit.point + hit.normal * 0.01f, 
-                Quaternion.LookRotation(
-                    hit.normal, 
-                    state == ToolBoxState.ADD ? 
-                        Vector3.up : currProjector.transform.up));
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask)) {
+            Vector3    position = hit.point + hit.normal * 0.01f;
+            Quaternion rotation = Quaternion.LookRotation(hit.normal, state == ToolBoxState.ADD ? Vector3.up : currProjector.transform.up);
+            currProjector.transform.SetPositionAndRotation(position, rotation);
+
+            if (state == ToolBoxState.VIEW)
+                connection.GetComponent<ProjectConnectionController>().SendMoveData(
+                    new ProjectorDataDTO(currProjector.gameObject.transform.GetSiblingIndex(), position, currProjector.transform.localScale, rotation));
+        }
     }
 
     void PickCast() {

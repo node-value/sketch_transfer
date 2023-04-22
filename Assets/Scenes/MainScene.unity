@@ -9945,6 +9945,7 @@ MonoBehaviour:
   emptyPanel: {fileID: 275290642}
   editPanel: {fileID: 1611719992}
   scetch: {fileID: 579097143}
+  connection: {fileID: 765455216}
 --- !u!1 &1469221371
 GameObject:
   m_ObjectHideFlags: 0

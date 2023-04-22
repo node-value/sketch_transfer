@@ -7,6 +7,8 @@ public class ScetchEditorS : MonoBehaviour {
 
     public GameObject emptyPanel, editPanel, scetch;
 
+    public GameObject connection;
+
     public DecalProjector Projector { 
         get { return _projector; }
         set { _projector = value; OnProjectorChanged(value); } 
@@ -39,18 +41,30 @@ public class ScetchEditorS : MonoBehaviour {
         return result;
     }
 
+    void sendData() {
+        connection.GetComponent<ProjectConnectionController>().SendMoveData(
+            new ProjectorDataDTO(
+                Projector.gameObject.transform.GetSiblingIndex(),
+                Projector.transform.position,
+                Projector.transform.localScale,
+                Projector.transform.rotation));
+    }
+
     void OnScaleChanged(float scale) {
         Projector.size = new(scale, scale, depthSlider.value);
         Projector.transform.localScale = new(scale,scale, depthSlider.value);
+        sendData();
     }
 
     void OnRotateChanged(float value) {
         Projector.transform.rotation = Quaternion.LookRotation(Projector.transform.forward) * Quaternion.Euler(0,0,value);
+        sendData();
     }
 
     void OnDepthChanged(float depth) {
         Projector.size = new(scaleSlider.value, scaleSlider.value, depth);
         Projector.transform.localScale = new(scaleSlider.value, scaleSlider.value, depth);
+        sendData();
     }
 
     void SwitchEditPanel(bool on) {
