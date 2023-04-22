@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
+using System.Xml.Serialization;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using WebSocketSharp;
@@ -17,9 +19,11 @@ public class ProjectConnectionController : MonoBehaviour {
 
 
     void Start() {
-        wsCheck = ConnectToWebSocket(wsCheck, HandleCheckMessage, "check");
+        wsCheck   = ConnectToWebSocket(wsCheck,   HandleCheckMessage,   "check");
         wsInitial = ConnectToWebSocket(wsInitial, HandleInitialMessage, "initial");
-        wsDelete  = ConnectToWebSocket(wsDelete, HandleDeleteMessage, "delete");
+        wsDelete  = ConnectToWebSocket(wsDelete,  HandleDeleteMessage,  "delete");
+        wsAdd     = ConnectToWebSocket(wsAdd,     HandleAddMessage,     "add");
+
         if (GlobalParams.Map.ContainsKey("mode") && (AppMode)GlobalParams.Map["mode"] == AppMode.CONNECT)
             SendCheckData();
     }
@@ -71,6 +75,16 @@ public class ProjectConnectionController : MonoBehaviour {
         }
     }
 
+    void HandleAddMessage(object _, MessageEventArgs e) {
+        ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
+        Debug.Log("Received Add data from user: " + response.sender + " ok size: " + response.data.Length);
+        if (response.data != "FAILED") {
+            UnityMainThreadDispatcher.Instance().Enqueue(() => CreateProjector(JsonUtility.FromJson<SketchData>(response.data), refObject, prefab));
+        } else {
+            Debug.Log("Connection failed");
+        }
+    }
+
     IEnumerator SendData(WebSocket socket, string sender, string receiver, string data) {
         yield return null;
         socket.Send(JsonUtility.ToJson(new ProjectDataDTO(sender, receiver, data)));
@@ -97,7 +111,24 @@ public class ProjectConnectionController : MonoBehaviour {
                 wsDelete, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], childN+""));
     }
 
+    public void SendAddData(SketchData data) {
+        UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData(wsAdd, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
+    }
 
+
+
+    private Texture2D CreateTexture(byte[] data) {
+        Texture2D texture = new(2, 2); texture.LoadImage(data);
+        return texture;
+    }
+
+    private void CreateProjector(SketchData data, Transform refObj, GameObject prefab) {
+        DecalProjector projector = UnityEngine.Object.Instantiate(prefab, data.Position, data.Rotation, refObj).GetComponent<DecalProjector>();
+        projector.material = Material.Instantiate(projector.material);
+        projector.material.SetTexture("Base_Map", CreateTexture(data.Texture));
+        projector.size = data.Scale;
+    }
 
 
     /*

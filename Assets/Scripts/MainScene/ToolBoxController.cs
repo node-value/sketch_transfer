@@ -68,6 +68,11 @@ public class ToolBoxController : MonoBehaviour {
             Cursor.visible = false;
             RelocateCast(state);
             if (Input.GetMouseButtonDown(0)) {
+                if (state == ToolBoxState.ADD) {
+                    Transform obj = currProjector.transform;
+                    connection.GetComponent<ProjectConnectionController>().SendAddData( 
+                        new SketchData(obj.position, obj.rotation, obj.localScale, currProjector.material.GetTexture("Base_Map"))); ;
+                }
                 Cursor.visible = true; 
                 state = ToolBoxState.PICK;
             }  
