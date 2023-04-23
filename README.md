@@ -45,6 +45,8 @@ The camera can be controlled using either the WASD/Arrow keys or the mouse. To z
 - The `Edit a Sketch` dropdown panel allows you to adjust the rotation, scale, and depth of the sketch. The depth value controls how far the sketch is projected, so if you see a sketch in an unexpected place, such as the back when it is supposed to be in the front, try lowering the depth value.
 
 ## Note for Challange Reviwers
+Apologies for the oversight, I forgot to include the test sketches in the original zip archive when submitting the challenge. You can now find them in the test_sketches folder 
+
 This app is fully functional, but it still needs some polish. There are currently no error messages in case something goes wrong, the dropdown menus are not as smooth as they could be, and some features are not yet implemented. This is because in the last four days, I decided to expand the challenge by adding a server and connection service, which required a lot of work. While the basic functionality is working, there are still some improvements that can be made.
 
 My plans for future improvements include debugging the Heroku deployment, adding error messages, adding a chat feature for communication between the artist and client, and adding different poses and locations to choose from. Thank you for taking the time to review my app! 
