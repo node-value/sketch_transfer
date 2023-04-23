@@ -2,7 +2,7 @@
 
 public static class GlobalParams {
 
-    public static string baseUrl = "localhost:8080";//https://sketch-transfer.herokuapp.com/
+    public static string baseUrl = "localhost:8080";//sketch-transfer.herokuapp.com
 
     public static Dictionary<string, object> Map = new() {
         { "authURL", $"http://{baseUrl}/api/auth/authenticate"},
