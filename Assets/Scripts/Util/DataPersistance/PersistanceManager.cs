@@ -59,15 +59,15 @@ public static class PersistanceManager {
 
     public static void SetProjectData(string dataRaw, Transform refObj, GameObject prefab) {
         ProjectData data = JsonUtility.FromJson<ProjectData>(dataRaw);
-        GlobalParams.Map.Add("bodyType", data.BodyType);
-        if (!GlobalParams.Map.ContainsKey("projectName")) GlobalParams.Map.Add("projectName", data.Name);
+        GlobalParams.Map["bodyType"]    = data.BodyType;
+        GlobalParams.Map["projectName"] = data.Name;
         data.SketchDataList.ForEach(sketchData => CreateProjector(sketchData, refObj, prefab));
     }
 
     public static void Load(Transform refObj, GameObject prefab, string projectName) {
         ProjectData data = ReadFromFile(projectName);
         if (data != null) {
-            GlobalParams.Map.Add("bodyType", data.BodyType);
+            GlobalParams.Map["bodyType"] = data.BodyType;
             data.SketchDataList.ForEach(sketchData => CreateProjector(sketchData, refObj, prefab) );
         } else Debug.Log("Loading failed");        
     }

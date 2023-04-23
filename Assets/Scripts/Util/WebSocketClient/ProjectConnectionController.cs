@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -20,7 +21,7 @@ public class ProjectConnectionController : MonoBehaviour {
     void Start() {
         isConnected = GlobalParams.Map.ContainsKey("mode") && (AppMode)GlobalParams.Map["mode"] == AppMode.CONNECT;
         loadingAnim.SetActive(isConnected && !GlobalParams.Map.ContainsKey("bodyType"));
-        wsCheck = ConnectToWebSocket(wsCheck,   HandleCheckMessage,   "check");
+        wsCheck = ConnectToWebSocket(wsCheck, HandleCheckMessage, "check");
         if (isConnected) {
             StartConnections();
             SendCheckData();
@@ -30,9 +31,9 @@ public class ProjectConnectionController : MonoBehaviour {
     void StartConnections() {
         isConnected = true;
         wsInitial = ConnectToWebSocket(wsInitial, HandleInitialMessage, "initial");
-        wsDelete  = ConnectToWebSocket(wsDelete,  HandleDeleteMessage,  "delete");
-        wsAdd     = ConnectToWebSocket(wsAdd,     HandleAddMessage,     "add");
-        wsMove    = ConnectToWebSocket(wsMove,    HandleMoveMessage,    "move");
+        wsDelete  = ConnectToWebSocket(wsDelete, HandleDeleteMessage, "delete");
+        wsAdd     = ConnectToWebSocket(wsAdd, HandleAddMessage, "add");
+        wsMove    = ConnectToWebSocket(wsMove, HandleMoveMessage, "move");
     }
 
     WebSocket ConnectToWebSocket(WebSocket socket, EventHandler<MessageEventArgs> handler, string endPoint) {
@@ -53,15 +54,24 @@ public class ProjectConnectionController : MonoBehaviour {
         Debug.Log("Received a message: " + e.Data);
         if (response.data == "GET_INITIAL") {
             StartConnections();
-            if (!GlobalParams.Map.ContainsKey("masterUsername")) GlobalParams.Map["masterUsername"] = response.sender;
+            GlobalParams.Map["masterUsername"] = response.sender; 
             Debug.Log("Sending initial data");
-            SendInitialData(response, refObject);
+            SendInitialData(response);
+            SendAllChildren(refObject);
         } else {
             isConnected = false;
             Debug.Log("Requested master id offline, either connect to another or load in master mode");
             SceneManager.UnloadSceneAsync("MainScene");
             SceneManager.LoadScene("Menu");
-            
+        }
+    }
+
+    void SendAllChildren(Transform refObj) {
+        for (int i = 0; i < refObj.childCount; i++) {
+            var child = refObj.GetChild(i);
+            SendAddData(new SketchData(
+                child.position, child.rotation, child.GetComponent<DecalProjector>().size, 
+                child.GetComponent<DecalProjector>().material.GetTexture("Base_Map")));
         }
     }
 
@@ -70,7 +80,10 @@ public class ProjectConnectionController : MonoBehaviour {
         Debug.Log("Received initial data from user: " + response.sender + " ok size: " + response.data.Length);
         if (response.data != "FAILED") {
             loadingAnim.SetActive(false);
-            UnityMainThreadDispatcher.Instance().Enqueue(() => PersistanceManager.SetProjectData(response.data, refObject, prefab));
+            InitialDataDTO data = JsonUtility.FromJson<InitialDataDTO>(response.data);
+            GlobalParams.Map["bodyType"]    = data.BodyType;
+            GlobalParams.Map["projectName"] = data.Name;
+
         } else {
             isConnected = false;
             Debug.Log("Requested master is offline, either connect to another or load in master mode");
@@ -116,28 +129,28 @@ public class ProjectConnectionController : MonoBehaviour {
             isConnected = false;
             Debug.Log("Connection failed");
         }
+
     }
 
     IEnumerator SendData(WebSocket socket, string sender, string receiver, string data) {
         yield return null;
         socket.Send(JsonUtility.ToJson(new ProjectDataDTO(sender, receiver, data)));
     }
-    private IEnumerator SendDataInit(WebSocket socket, string sender, string receiver, Transform refer) {
-        yield return null;
-        socket.Send(JsonUtility.ToJson(new ProjectDataDTO(sender, receiver, PersistanceManager.GetProjectDataRaw(refer))));
-    }
 
     private void SendCheckData() {
         if (isConnected)
             UnityMainThreadDispatcher.Instance().Enqueue(
-                SendData(
-                    wsCheck, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], "GET_INITIAL"));
+            SendData(
+            wsCheck, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], "GET_INITIAL"));
     }
 
-    private void SendInitialData(ProjectDataDTO response, Transform referObject) {
+    private void SendInitialData(ProjectDataDTO response) {
         if (isConnected)
             UnityMainThreadDispatcher.Instance().Enqueue(
-                SendDataInit(wsInitial, response.receiver, response.sender, referObject));
+                SendData(
+                    wsInitial, response.receiver, response.sender,
+                    JsonUtility.ToJson(
+                        new InitialDataDTO((string)GlobalParams.Map["projectName"], (BodyType)GlobalParams.Map["bodyType"]))));
     }
 
     public void SendDeleteData(int childN) {
@@ -168,11 +181,13 @@ public class ProjectConnectionController : MonoBehaviour {
 
     private void CreateProjector(SketchData data, Transform refObj, GameObject prefab) {
         DecalProjector projector = UnityEngine.Object.Instantiate(prefab, data.Position, data.Rotation, refObj).GetComponent<DecalProjector>();
+        projector.size = data.Scale;
+        projector.transform.localScale = data.Scale;
         projector.material = Material.Instantiate(projector.material);
         Texture2D texture = CreateTexture(data.Texture);
         projector.material.SetTexture("Base_Map", texture);
         projector.gameObject.GetComponent<TextureHolder>().texture = ResizeTexture(texture);
-        projector.size = data.Scale;
+        
     }
 
     private Texture2D ResizeTexture(Texture2D texture) {

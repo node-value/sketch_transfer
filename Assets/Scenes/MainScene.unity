@@ -13896,5 +13896,9 @@ PrefabInstance:
       propertyPath: m_Name
       value: LoadingAnim
       objectReference: {fileID: 0}
+    - target: {fileID: 4086727875682458158, guid: 0a28bb866b1218148b6b9a9b743185b4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0a28bb866b1218148b6b9a9b743185b4, type: 3}

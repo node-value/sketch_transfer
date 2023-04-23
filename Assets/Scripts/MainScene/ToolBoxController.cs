@@ -4,6 +4,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using SimpleFileBrowser;
 using UnityEngine.EventSystems;
+//using UnityEngine.UIElements;
 
 public class ToolBoxController : MonoBehaviour {
 
@@ -147,23 +148,29 @@ public class ToolBoxController : MonoBehaviour {
         state = ToolBoxState.ADD;
     }
 
+    int TextureSizeKB(byte[] textureRaw) {
+        return textureRaw.Length / 1024;
+    }
+
     void CreateProjector(Texture2D texture) { 
         currProjector = Instantiate(projectorPrefab, new(0,0,0), new(), referenceObject).GetComponent<DecalProjector>();
         currProjector.material = Material.Instantiate(currProjector.material);
         currProjector.material.SetTexture("Base_Map", texture);
 
-        currProjector.gameObject.GetComponent<TextureHolder>().texture = ResizeTexture(texture);
+        currProjector.gameObject.GetComponent<TextureHolder>().texture = ResizeTexture(texture, 4);
 
     }
 
     Texture2D CreateTexture2D(string path) {
-        Texture2D texture = new(2, 2);
-        texture.LoadImage(File.ReadAllBytes(path));
+        byte[] textureRaw = File.ReadAllBytes(path);
+        Texture2D texture = new(1, 1);
+        texture.LoadImage(textureRaw);
+        if (TextureSizeKB(textureRaw) > 340) texture = ResizeTexture(texture, TextureSizeKB(textureRaw)/340);
         return texture;
     }
 
-    Texture2D ResizeTexture(Texture2D texture) {
-        Texture2D result = new(texture.width / 4, texture.height / 4);
+    Texture2D ResizeTexture(Texture2D texture, int factor) {
+        Texture2D result = new(texture.width / factor, texture.height / factor);
         Graphics.ConvertTexture(texture, result);
         return result;
     }
