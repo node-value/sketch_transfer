@@ -21,14 +21,14 @@ This project aims to help tattoo artists and their clients overcome the challeng
 
 ## Instructions
 First, you will need to login
-- If the [server](https://github.com/node-value/sketch_transfer_server) is running locally on `localhost:8080`, then just sign up/in
-- If there is no local server, then uncomit the baseUrl var in GlobalParams script. It will allow you to login to remote server, but client-client option is not available right now
+- If the [server](https://github.com/node-value/sketch_transfer_server) is running locally, then uncomment `localhost:8080` in GlobalParams script.
+- Remote server is avaliable after last update, but connectoin is unstable, and lasts for not long.
 
 ## Modes
 **Modes Available: Master and Client**
 - In Master mode, you can use the app in single mode without any client connected or in co-working mode if a client is connected to you. Once the client is connected, they will receive all your project data and can manipulate it. Changes made by both parties can be seen in real-time.
 - In Client mode, you can connect to a provided master if they are online. To start your own project, switch to Master mode.
-- For now connecton available only if the server runs on local machine.
+- Connecton for a limmited time, if connection is dissapear, close the app and reconnect.
 
 ### Controls
 The camera can be controlled using either the WASD/Arrow keys or the mouse. To zoom in, hold Shift + W/Arrow Up, and to zoom out, hold Shift + S/Arrow Down. If using the mouse, hold and pull the left button to adjust the camera.
