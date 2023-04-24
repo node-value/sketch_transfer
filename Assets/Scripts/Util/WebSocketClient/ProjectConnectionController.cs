@@ -42,6 +42,11 @@ public class ProjectConnectionController : MonoBehaviour {
             socket.SetCookie(new Cookie("Bearer", GlobalParams.Map["token"] as string));
             socket.OnOpen += (sender, e) => Debug.Log($"Connection {endPoint} opened");
             socket.OnMessage += handler;
+            socket.OnMessage += (_, e) => {
+                if (e.IsPing) {
+                    Debug.Log("received a ping");
+                }    
+            };
             socket.Connect();
             return socket;
         } Debug.Log("Auth token is absent, try to login again");
@@ -171,8 +176,6 @@ public class ProjectConnectionController : MonoBehaviour {
             UnityMainThreadDispatcher.Instance().Enqueue(
                 SendData(wsMove, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
     }
-
-
 
     private Texture2D CreateTexture(byte[] data) {
         Texture2D texture = new(2, 2); texture.LoadImage(data);
