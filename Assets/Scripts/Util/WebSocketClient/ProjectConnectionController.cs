@@ -9,12 +9,13 @@ using WebSocketSharp.Net;
 
 public class ProjectConnectionController : MonoBehaviour {
 
-    private WebSocket wsCheck, wsInitial, wsDelete, wsMove, wsAdd;
+    private WebSocket wsCheck, wsInitial, wsDelete, wsMove, wsAdd, wsChat;
 
     public Transform refObject;
     public GameObject prefab;
     public GameObject toolBox;
     public GameObject loadingAnim;
+    public GameObject chat;
 
     private bool isConnected;
 
@@ -31,9 +32,11 @@ public class ProjectConnectionController : MonoBehaviour {
     void StartConnections() {
         isConnected = true;
         wsInitial = ConnectToWebSocket(wsInitial, HandleInitialMessage, "initial");
-        wsDelete  = ConnectToWebSocket(wsDelete, HandleDeleteMessage, "delete");
-        wsAdd     = ConnectToWebSocket(wsAdd, HandleAddMessage, "add");
-        wsMove    = ConnectToWebSocket(wsMove, HandleMoveMessage, "move");
+        wsDelete  = ConnectToWebSocket(wsDelete,  HandleDeleteMessage,  "delete");
+        wsAdd     = ConnectToWebSocket(wsAdd,     HandleAddMessage,     "add");
+        wsMove    = ConnectToWebSocket(wsMove,    HandleMoveMessage,    "move");
+        wsChat    = ConnectToWebSocket(wsChat,    HandleChatMessage,    "chat");
+        
     }
 
     WebSocket ConnectToWebSocket(WebSocket socket, EventHandler<MessageEventArgs> handler, string endPoint) {
@@ -42,11 +45,7 @@ public class ProjectConnectionController : MonoBehaviour {
             socket.SetCookie(new Cookie("Bearer", GlobalParams.Map["token"] as string));
             socket.OnOpen += (sender, e) => Debug.Log($"Connection {endPoint} opened");
             socket.OnMessage += handler;
-            socket.OnMessage += (_, e) => {
-                if (e.IsPing) {
-                    Debug.Log("received a ping");
-                }    
-            };
+            socket.OnMessage += (_, e) => { if (e.IsPing) Debug.Log("received a ping"); };
             socket.Connect();
             return socket;
         } Debug.Log("Auth token is absent, try to login again");
@@ -54,10 +53,21 @@ public class ProjectConnectionController : MonoBehaviour {
         return null;
     }
 
+    void HandleChatMessage(object _, MessageEventArgs e) {
+        ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
+        Debug.Log("Received chat message " + response.data);
+        if (response.data != "FAILED") {
+            UnityMainThreadDispatcher.Instance().Enqueue(() => chat.GetComponent<ChatController>().CreateIncomeMessage(response.data));
+        } else {
+            isConnected = false;
+            Debug.Log("Connection failed");
+        }
+    }
+
     void HandleCheckMessage(object _, MessageEventArgs e) {
         ProjectDataDTO response = JsonUtility.FromJson<ProjectDataDTO>(e.Data);
         Debug.Log("Received a message: " + e.Data);
-        if (response.data == "GET_INITIAL") {
+        if (response.data != "FAILED") {
             StartConnections();
             GlobalParams.Map["masterUsername"] = response.sender; 
             Debug.Log("Sending initial data");
@@ -143,39 +153,42 @@ public class ProjectConnectionController : MonoBehaviour {
     }
 
     private void SendCheckData() {
-        if (isConnected)
-            UnityMainThreadDispatcher.Instance().Enqueue(
-            SendData(
-            wsCheck, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], "GET_INITIAL"));
+        if (isConnected) UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData( wsCheck, 
+                (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], "GET_INITIAL"));
     }
 
     private void SendInitialData(ProjectDataDTO response) {
-        if (isConnected)
-            UnityMainThreadDispatcher.Instance().Enqueue(
-                SendData(
-                    wsInitial, response.receiver, response.sender,
-                    JsonUtility.ToJson(
-                        new InitialDataDTO((string)GlobalParams.Map["projectName"], (BodyType)GlobalParams.Map["bodyType"]))));
+        if (isConnected) UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData( wsInitial, response.receiver, response.sender,
+                JsonUtility.ToJson(
+                    new InitialDataDTO((string)GlobalParams.Map["projectName"], (BodyType)GlobalParams.Map["bodyType"]))));
     }
 
     public void SendDeleteData(int childN) {
-        if (isConnected)
-            UnityMainThreadDispatcher.Instance().Enqueue(
-                SendData(
-                    wsDelete, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], childN+""));
+        if (isConnected) UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData( wsDelete, 
+                (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], childN+""));
+    }
+
+    public void SendMessageData(string message) {
+        if (isConnected) UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData(wsChat,
+                (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], message));
     }
 
     public void SendAddData(SketchData data) {
-        if (isConnected)
-            UnityMainThreadDispatcher.Instance().Enqueue(
-                SendData(wsAdd, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
+        if (isConnected) UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData(wsAdd, 
+                (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
     }
 
     public void SendMoveData(ProjectorDataDTO data) {
-        if (isConnected)
-            UnityMainThreadDispatcher.Instance().Enqueue(
-                SendData(wsMove, (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
+        if (isConnected) UnityMainThreadDispatcher.Instance().Enqueue(
+            SendData(wsMove, 
+                (string)GlobalParams.Map["username"], (string)GlobalParams.Map["masterUsername"], JsonUtility.ToJson(data)));
     }
+
 
     private Texture2D CreateTexture(byte[] data) {
         Texture2D texture = new(2, 2); texture.LoadImage(data);
