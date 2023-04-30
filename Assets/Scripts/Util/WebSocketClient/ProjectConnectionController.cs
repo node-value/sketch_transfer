@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -98,7 +97,6 @@ public class ProjectConnectionController : MonoBehaviour {
             InitialDataDTO data = JsonUtility.FromJson<InitialDataDTO>(response.data);
             GlobalParams.Map["bodyType"]    = data.BodyType;
             GlobalParams.Map["projectName"] = data.Name;
-
         } else {
             isConnected = false;
             Debug.Log("Requested master is offline, either connect to another or load in master mode");
